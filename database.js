@@ -830,4 +830,7 @@ const locations = [
     { id: 4197, rank: 197, type: 'hike', tag: 'nature', name: "Sao Din Na Noi", lat: 18.317, lng: 100.750, price: 0, desc: "Wandeling door aarde-pilaren en canyons in Si Nan NP." },
     { id: 4198, rank: 198, type: 'hike', tag: 'nature', name: "Doi Phu Kha (1715 Viewpoint)", lat: 19.200, lng: 101.083, price: 200, desc: "Natuurpaden vanaf het hoogste punt van de weg in Nan. Roze bloemen." },
     { id: 4199, rank: 199, type: 'hike', tag: 'nature', name: "Khun Sathan National Park", lat: 18.283, lng: 100.517, price: 100, desc: "Kamperen en wandelen op bergkammen in het kersenbloesemseizoen." },
-    { id: 4200, rank: 200, type: 'hike', tag: 'nature', name: "Phu Langka (Magic Mountain View)", lat: 19.350, lng: 100.550, price: 0, desc: "Korte klim naar uitzichtpunt over kalksteenrotsen in de vallei (mist)." },
+    { id: 4200, rank: 200, type: 'hike', tag: 'nature', name: "Phu Langka (Magic Mountain View)", lat: 19.350, lng: 100.550, price: 0, desc: "Korte klim naar uitzichtpunt over kalksteenrotsen in de vallei (mist)." }
+];
+
+    
