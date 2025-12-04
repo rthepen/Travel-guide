@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Thailand Ultimate Guide v22 (Fixed Mobile)</title>
+    <title>Thailand Ultimate Guide v23 (Search Fixed)</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -16,18 +16,13 @@
         
         /* --- MENU KNOP (FIXED POSITIE) --- */
         #toggle-btn {
-            position: fixed; /* Blijft altijd op dezelfde plek op het scherm */
-            top: 20px; 
-            right: 20px;
+            position: fixed; top: 20px; right: 20px;
             background: #fff; color: #333;
-            padding: 12px 20px; 
-            border-radius: 50px;
+            padding: 12px 20px; border-radius: 50px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            z-index: 99999 !important; /* Forceer bovenop alles */
-            border: none;
+            z-index: 99999 !important; border: none;
             font-weight: 700; font-size: 15px;
             cursor: pointer; display: flex; align-items: center; gap: 8px;
-            /* Voorkom selectie */
             -webkit-user-select: none; user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
@@ -35,16 +30,11 @@
 
         /* --- GPS KNOP OP KAART (FIXED POSITIE) --- */
         #gps-btn-map {
-            position: fixed; /* Ook fixed zodat hij niet wegvalt */
-            bottom: 40px; /* Iets hoger dan Leaflet logo */
-            right: 20px;
+            position: fixed; bottom: 40px; right: 20px;
             z-index: 99999 !important; 
             width: 44px; height: 44px;
-            background: #fff; 
-            border: none;
-            border-radius: 50%; 
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            background: #fff; border: none; border-radius: 50%; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
             font-size: 22px; color: #333;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: background 0.2s;
@@ -55,22 +45,18 @@
 
         /* --- SIDEBAR --- */
         #controls {
-            position: fixed; /* Ook fixed voor stabiliteit */
-            top: 0; right: 0;
+            position: fixed; top: 0; right: 0;
             height: 100vh; width: 350px;
             background: rgba(255, 255, 255, 0.98);
             box-shadow: -5px 0 25px rgba(0,0,0,0.2);
-            z-index: 100000 !important; /* Nog hoger dan de knoppen */
+            z-index: 100000 !important;
             display: flex; flex-direction: column;
             transform: translateX(100%); 
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #controls.active { transform: translateX(0); }
 
-        /* Mobiele aanpassing */
-        @media (max-width: 600px) { 
-            #controls { width: 85%; max-width: 320px; } 
-        }
+        @media (max-width: 600px) { #controls { width: 85%; max-width: 320px; } }
 
         .sidebar-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
         .sidebar-content { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
@@ -151,7 +137,7 @@
         </div>
 
         <div class="sidebar-content">
-            <input type="text" id="searchInput" placeholder="🔍 Zoek op naam..." onkeyup="renderMarkers()">
+            <input type="text" id="searchInput" placeholder="🔍 Zoek op naam of omschrijving..." oninput="renderMarkers()">
 
             <h4>🧮 Wisselkoers & Aankoop</h4>
             <div class="calc-box">
@@ -238,11 +224,10 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
-        // --- MENU LOGICA (Preventie van sluiten bij klikken) ---
+        // --- MENU LOGICA ---
         const controls = document.getElementById('controls');
         const toggleBtn = document.getElementById('toggle-btn');
 
-        // Voorkom dat klikken/scrollen in het menu de kaart beïnvloedt
         L.DomEvent.disableClickPropagation(controls);
         L.DomEvent.disableScrollPropagation(controls);
         L.DomEvent.disableClickPropagation(toggleBtn);
@@ -265,25 +250,19 @@
         if(localStorage.getItem('calc_eur')) document.getElementById('calcEUR').value = localStorage.getItem('calc_eur');
         updateRateDisplay(userRate);
 
-        // --- 3. GPS LOCATIE (SLIM) ---
-        // Vraag positie op, maar verplaats kaart nog NIET automatisch (setView: false)
+        // --- 3. GPS LOCATIE ---
         map.locate({setView: false, watch: true, enableHighAccuracy: true});
 
         map.on('locationfound', function(e) {
             userLat = e.latlng.lat;
             userLng = e.latlng.lng;
 
-            // Update de blauwe stip
             if (!userMarker) {
                 userMarker = L.circleMarker(e.latlng, { radius: 8, fillColor: "#4285F4", color: "#ffffff", weight: 3, opacity: 1, fillOpacity: 1 }).addTo(map).bindPopup("Jouw Locatie");
             } else { userMarker.setLatLng(e.latlng); }
             document.getElementById('user-status').innerText = "GPS Actief ✅";
 
-            // SLIMME LOGICA: Alleen inzoomen als je IN Thailand bent
-            // Thailand grenzen (grofweg): Lat 5-21, Lng 97-106
             const isInThailand = (userLat >= 5 && userLat <= 21) && (userLng >= 97 && userLng <= 106);
-
-            // We zoomen alleen automatisch in bij de EERSTE keer vinden als je in Thailand bent
             if (isInThailand && !window.hasAutoZoomed) {
                 map.setView(e.latlng, 14);
                 window.hasAutoZoomed = true; 
@@ -292,7 +271,6 @@
 
         map.on('locationerror', function(e) { document.getElementById('user-status').innerText = "GPS niet gevonden ❌"; });
 
-        // Handmatige knop: Forceer zoom naar gebruiker, waar die ook is
         function locateUser(force) {
             if(userLat && userLng) { 
                 map.setView([userLat, userLng], 14); 
@@ -367,7 +345,6 @@
                 if (typeof loc.price === 'string' && (loc.price.toLowerCase().includes('gratis') || loc.price.toLowerCase().includes('donatie'))) {
                     return '<span style="color:green">Gratis</span>';
                 }
-                
                 let priceVal = 0;
                 if (loc.price_thb !== undefined && loc.price_thb !== null) {
                     priceVal = loc.price_thb;
@@ -376,14 +353,11 @@
                 } else if (typeof loc.price === 'string') {
                     priceVal = parseFloat(loc.price.replace(/[^0-9,.]/g, '').replace(',', '.'));
                 }
-
                 if (priceVal === 0) return '<span style="color:green">Gratis</span>';
-
                 if (priceVal > 0) {
                      let euroPrice = (priceVal / 100) * userRate;
                      return `€ ${euroPrice.toFixed(2)}`;
                 }
-                
                 return "Onbekend";
             };
 
@@ -391,7 +365,14 @@
                 if (loc.lat < 5 || loc.lat > 21) return; 
                 if (showFavsOnly && !favorites.includes(loc.id)) return;
                 if (!showFavsOnly && loc.rank > maxRank) return;
-                if (searchTerm && !loc.name.toLowerCase().includes(searchTerm)) return;
+                
+                // UPDATE: Slimmer zoeken (Naam EN Beschrijving)
+                if (searchTerm) {
+                    const inName = loc.name.toLowerCase().includes(searchTerm);
+                    const inDesc = loc.desc.toLowerCase().includes(searchTerm);
+                    if (!inName && !inDesc) return;
+                }
+
                 if (!catChecked.includes(loc.type)) return;
                 if (!tagChecked.includes(loc.tag)) return;
 
@@ -489,7 +470,9 @@
                 el.addEventListener('change', renderMarkers);
             }
         });
-        document.getElementById('searchInput').addEventListener('keyup', renderMarkers);
+        
+        // Luister naar 'input' voor directe zoekresultaten
+        document.getElementById('searchInput').addEventListener('input', renderMarkers);
 
         setTimeout(renderMarkers, 100);
 
