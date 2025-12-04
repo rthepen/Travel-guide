@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Thailand Ultimate Guide v19 (Stable)</title>
+    <title>Thailand Ultimate Guide v20 (Smart GPS)</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -129,7 +129,7 @@
 
     <button id="toggle-btn">⚙️ Filters & Tools</button>
 
-    <button id="gps-btn-map" onclick="locateUser()">🎯</button>
+    <button id="gps-btn-map" onclick="locateUser(true)">🎯</button>
 
     <div id="controls">
         <div class="sidebar-header">
@@ -203,7 +203,7 @@
         </div>
 
         <div class="sidebar-footer">
-            <button class="loc-btn" onclick="locateUser()">📍 Mijn Locatie (Menu)</button>
+            <button class="loc-btn" onclick="locateUser(true)">📍 Mijn Locatie (Menu)</button>
             <div id="user-status" style="font-size: 11px; margin-top: 5px; color: #666; text-align: center;"></div>
         </div>
     </div>
@@ -218,33 +218,28 @@
         // --- 1. SETUP MAP ---
         const isMobile = window.innerWidth < 600;
         const initialZoom = isMobile ? 5 : 6;
+        
+        // Start altijd met zicht op heel Thailand
         const map = L.map('map', { zoomControl: false }).setView([13.0000, 101.5000], initialZoom);
+        
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
-        // --- MENU LOGICA (FIXED) ---
+        // --- MENU LOGICA ---
         const controls = document.getElementById('controls');
         const toggleBtn = document.getElementById('toggle-btn');
 
-        // Voorkom dat klikken/scrollen in het menu de kaart beïnvloedt
+        // Voorkom klikken op menu gaat naar de kaart
         L.DomEvent.disableClickPropagation(controls);
         L.DomEvent.disableScrollPropagation(controls);
         L.DomEvent.disableClickPropagation(toggleBtn);
 
         function toggleMenu(e) { 
-            if(e) e.stopPropagation(); // Stop doorklikken naar kaart
+            if(e) e.stopPropagation(); 
             controls.classList.toggle('active'); 
         }
-
-        // Koppel de klik event listener aan de knop
         toggleBtn.addEventListener('click', toggleMenu);
-
-        // Optioneel: Sluit menu als je OP de kaart klikt (betere UX)
-        map.on('click', function() {
-            if (controls.classList.contains('active')) {
-                controls.classList.remove('active');
-            }
-        });
+        map.on('click', function() { if (controls.classList.contains('active')) controls.classList.remove('active'); });
 
         // --- 2. STATE & STORAGE ---
         let favorites = JSON.parse(localStorage.getItem('thai_favs')) || [];
@@ -257,24 +252,40 @@
         if(localStorage.getItem('calc_eur')) document.getElementById('calcEUR').value = localStorage.getItem('calc_eur');
         updateRateDisplay(userRate);
 
-        // --- 3. GPS LOCATIE ---
+        // --- 3. GPS LOCATIE (SLIM) ---
+        // Vraag positie op, maar verplaats kaart nog NIET automatisch (setView: false)
         map.locate({setView: false, watch: true, enableHighAccuracy: true});
 
         map.on('locationfound', function(e) {
             userLat = e.latlng.lat;
             userLng = e.latlng.lng;
+
+            // Update de blauwe stip
             if (!userMarker) {
                 userMarker = L.circleMarker(e.latlng, { radius: 8, fillColor: "#4285F4", color: "#ffffff", weight: 3, opacity: 1, fillOpacity: 1 }).addTo(map).bindPopup("Jouw Locatie");
             } else { userMarker.setLatLng(e.latlng); }
             document.getElementById('user-status').innerText = "GPS Actief ✅";
+
+            // SLIMME LOGICA: Alleen inzoomen als je IN Thailand bent
+            // Thailand grenzen (grofweg): Lat 5-21, Lng 97-106
+            const isInThailand = (userLat >= 5 && userLat <= 21) && (userLng >= 97 && userLng <= 106);
+
+            // We zoomen alleen automatisch in bij de EERSTE keer vinden
+            // Of als de gebruiker expliciet op de knop drukt (zie locateUser functie)
+            if (isInThailand && !window.hasAutoZoomed) {
+                map.setView(e.latlng, 14);
+                window.hasAutoZoomed = true; // Zzodat hij niet blijft springen als jij de kaart beweegt
+            }
+            // Als je NIET in Thailand bent, doet hij niets (en blijft dus op de startpositie staan)
         });
 
         map.on('locationerror', function(e) { document.getElementById('user-status').innerText = "GPS niet gevonden ❌"; });
 
-        function locateUser() {
+        // Handmatige knop: Forceer zoom naar gebruiker, waar die ook is
+        function locateUser(force) {
             if(userLat && userLng) { 
                 map.setView([userLat, userLng], 14); 
-                if(isMobile) controls.classList.remove('active'); // Sluit menu op mobiel na klik
+                if(isMobile) controls.classList.remove('active');
             } 
             else { alert("Nog geen GPS signaal."); }
         }
@@ -341,7 +352,6 @@
             const catChecked = Array.from(document.querySelectorAll('input[name="cat"]:checked')).map(cb => cb.value);
             const tagChecked = Array.from(document.querySelectorAll('input[name="tag"]:checked')).map(cb => cb.value);
 
-            // VERBETERDE PRIJS BEREKENING
             const convertPrice = (loc) => {
                 if (typeof loc.price === 'string' && (loc.price.toLowerCase().includes('gratis') || loc.price.toLowerCase().includes('donatie'))) {
                     return '<span style="color:green">Gratis</span>';
